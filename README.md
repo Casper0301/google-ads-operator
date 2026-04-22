@@ -1,78 +1,123 @@
-# Google Ads Operator — skill + MCP bundle
+# Google Ads Operator
 
-Et selvstendig sett med verktøy for å operere Google Ads-kontoer gjennom Claude Code / Claude Desktop. Bygget for å gi en PPC-konsulent eller byråoperatør kraftig AI-leverage på både daglig drift (søketerm-analyse, negative søkeord, kontoaudit) og strategisk arbeid (kontostruktur, bud-strategi, konverteringssporing).
+**Open-source operator skill + MCP setup for Claude Code.** Turn Claude into a deep Google Ads operator that thinks like a senior PPC consultant, not like a Google rep. Built for small-to-mid-budget accounts where getting the fundamentals right matters more than chasing every shiny Google feature.
 
-## Hva du får i denne bundle-en
+Free. MIT licensed. No strings attached.
 
-| Fil | Hva det er | Hvorfor du trenger det |
-|-----|------------|-----------------------|
-| `SKILL.md` | Deep operator-skill (9 000+ ord, 20 seksjoner) | Claude bruker denne som sin kunnskapsbase for alle Google Ads-beslutninger. Sourced fra Fred Vallaeys, John Moran, Brad Geddes, Jyll Saskin Gales, Kirk Williams m.fl. — unngår Google-blessede anbefalinger som optimerer for Googles inntekt over klientens ROAS. |
-| `SETUP.md` | Steg-for-steg installasjon | Installere Claude Code, søke om Google Ads developer token, sette opp OAuth, koble til MCP |
-| `MCP_TOOLS.md` | Referanse over alle MCP-verktøyene | Se hvilke handlinger Claude kan utføre på dine vegne — både lese-operasjoner og write-operasjoner med approval-gate |
+![Status](https://img.shields.io/badge/status-production-green) ![License](https://img.shields.io/badge/license-MIT-blue) ![Language](https://img.shields.io/badge/language-English%20%7C%20Norsk-lightgrey)
 
-## To brukssett
+## What it is
 
-### Nivå 1 — bare skill (15 min oppsett)
+A deep, source-grounded skill for Claude Code that covers the full Google Ads operator's job — account structure, match types, negative keywords, bidding strategy, Smart Bidding readiness thresholds, Performance Max traps, Quality Score mechanics, conversion tracking, Consent Mode v2, landing-page alignment, and more. Sourced from 15+ practitioners who have actually run accounts at scale: Fred Vallaeys, John Moran, Brad Geddes, Jyll Saskin Gales, Kirk Williams, Miles McNair, Aaron Young, Navah Hopkins, Sarah Stemen, and others — **explicitly deprioritizing Google's own Skillshop material** because Google's incentives and your client's ROAS don't always align.
 
-Du får Claude til å tenke som en erfaren PPC-operatør. Han hjelper deg resonere om bud-strategi, kontostruktur, match-typer, Smart Bidding-readiness, PMax-fallgruver, Norge-spesifikke forhold (fellesferie, kommune-targeting, Finn.no-dynamikk). Ingen API-tilgang, ingen skrivetilgang — bare en veldig dyktig rådgiver.
+Paired with optional MCP setup so Claude can read from and propose changes to your actual Google Ads accounts through a plan → preview → confirm → execute pipeline. Every write operation requires your approval. Full audit log. Rollback on any change.
 
-### Nivå 2 — skill + MCP (2–4 timer oppsett)
+## Why it exists
 
-Du gir Claude direkte tilgang til Google Ads API-en din gjennom en lokal MCP-server. Han kan da:
+Most Google Ads agencies charge 6 000–15 000 NOK/month to manage a single SMB account with a 5 000 NOK/month ad budget. Half the work is routine (search terms review, negative keywords, budget pacing) and the other half is judgment calls that require real expertise. AI leverage collapses the routine half while preserving — and sharpening — the judgment half. This bundle gives you both.
 
-- Hente search terms-rapporter for hvilken som helst kunde på kommando
-- Foreslå negative søkeord med begrunnelse — du bekrefter før det skrives
-- Foreslå kampanje-pauser og budsjett-endringer med forhåndsvisning
-- Revertere tidligere endringer via rollback
-- Loggføre alt i audit-log (din egen Supabase)
+If you're a solo PPC operator, a small agency trying to scale without hiring, or a marketing generalist who's strong on Meta but weak on Google, this closes that gap.
 
-Hele skrive-flyten går gjennom **plan → preview → confirm → execute** — Claude skriver aldri direkte til en konto uten at du har godkjent nøyaktig hva som skjer. Undo-data lagres på hver handling, så du kan rulle tilbake om noe blir feil.
+## What's inside
 
-## Hva du må ha for å kjøre dette
+| File | Purpose |
+|------|---------|
+| [`SKILL.md`](./SKILL.md) | Deep operator skill, 850+ lines, sourced inline. This is the brain. |
+| [`README.md`](./README.md) | This file. |
+| [`SETUP.md`](./SETUP.md) | Step-by-step install. Claude Code → developer token → OAuth → Supabase → MCP connection. Norwegian — translate if needed. |
+| [`MCP_TOOLS.md`](./MCP_TOOLS.md) | Reference for all MCP tools with example prompts. Norwegian. |
+| [`LICENSE`](./LICENSE) | MIT. |
 
-**For nivå 1 (skill only):**
-- Claude Code installert (gratis CLI fra Anthropic)
-- En Anthropic-konto (Pro/Max eller API-key)
+## Two ways to use it
 
-**For nivå 2 (skill + MCP):**
-- Alt over
-- Google Ads developer token (Basic access er nok — gratis, godkjennes på 1–3 dager)
-- Google Cloud-prosjekt for OAuth 2.0 credentials
-- (Valgfritt, men anbefalt) Supabase-prosjekt for å lagre tokens, changes og audit-log
-- Node.js 20+
-- Ditt eget MCC (Manager Account) hvis du styrer flere klienter
+### Level 1 — skill only (15-minute install)
 
-Alt gratis eller fremforhandlet i Google-økosystemet.
+Drop `SKILL.md` into `~/.claude/skills/google-ads-operator/` and you're done. Claude now reasons about Google Ads decisions using the operator skill — bidding-strategy selection, Smart Bidding readiness, match-type framework, negative keyword discipline, Performance Max fit assessment, Norwegian market specifics (Finn.no dynamics, kommune-level targeting, fellesferie, Consent Mode v2 compliance).
 
-## Hvordan komme i gang
+Ask Claude questions like:
+- *"Should we switch this campaign from Max Conversions to tCPA? 30-day stats: 42 conversions, 340 kr CPA, stable."*
+- *"My Google rep is pushing Performance Max. Should I do it?"*
+- *"Give me a negative keyword seed list for a Norwegian used-car dealer on Tier 1 budget."*
+- *"My Ad Strength is 'Poor' — what's actually worth fixing?"*
 
-1. Les `SETUP.md` fra topp til bunn før du begynner. Ikke hopp over developer token-søknaden — den har et par fallgruver (business-domene i kontakt-e-post, org.nr, klar beskrivelse av use case).
-2. Start med nivå 1. Få skillen til å fungere i Claude Code og bruk den noen dager. Når du kjenner hva den kan, vil du forstå hvorfor MCP-tilkobling er neste nivå.
-3. Deretter følg MCP-installasjonen i `SETUP.md` seksjon 4.
+Answers are grounded in sourced practitioner wisdom, not Google's default advice.
 
-## Om kildegrunnlaget i skillen
+### Level 2 — skill + MCP (2–4 hours install)
 
-Skillen siterer inline der en påstand er load-bearing. Når flere praktikere er enige om noe, er det behandlet som prinsipp. Når kun én operatør står bak en påstand, er det flagget som sådan. Googles eget Skillshop-materiale er eksplisitt deprioritert fordi Googles incentiver og klientens ROAS-incentiver divergerer på flere tilbakevendende punkter (PMax-push, Smart Bidding-terskler, auto-applied recommendations, match-type-anbefalinger).
+Claude gets direct Google Ads API access through a local MCP server. Now he can:
 
-Primære kilder:
-- Fred Vallaeys (Optmyzr, ex-Google 10 år)
-- John Moran (Solutions 8)
-- Brad Geddes (Adalysis, forfatter av *Advanced Google AdWords*)
-- Jyll Saskin Gales (ex-Google rep, coach)
-- Kirk Williams (Zato Marketing)
-- Miles McNair (PPC Mastery)
-- Aaron Young (Define Digital Academy)
-- Navah Hopkins, Sarah Stemen, Andrew Hales
-- PPC Town Hall, r/PPC community-wisdom
+- Pull search terms reports for any client on demand
+- Propose negative keywords with reasoning — you confirm, then execute
+- Propose campaign pauses and budget changes with preview + undo data
+- Roll back any prior change in one command
+- Audit-log everything in your own Supabase
 
-## Norsk SMB-kontekst
+All write operations go through **plan → preview → confirm → execute**. Claude never writes to an ad account without showing you exactly what's going to happen.
 
-Skillen er tunet for NOK-budsjetter (typisk 2 000–20 000 kr/mnd, noen opp til 50 000) og norsk markedsstruktur: lavere søkevolum, Finn.no som dominerende kanal i flere vertikaler, bokmål/nynorsk-hensyn, kommune-nivå targeting, fellesferie-sesongmønster, GDPR + Consent Mode v2-krav. US-baserte terskler er eksplisitt diskontert der de ikke oversettes.
+*Note: Level 2 requires a Google Ads Developer Token (free, 1–3 day approval), a Google Cloud project for OAuth, and optionally a Supabase project for persistence. Full walkthrough in `SETUP.md`.*
 
-## Lisens og bruk
+## Quickstart (Level 1)
 
-Privat bundle. Bruk fritt i din egen operasjon. Ikke distribuer videre uten avsender-samtykke.
+```bash
+# Clone the repo
+git clone https://github.com/Casper0301/google-ads-operator.git
+cd google-ads-operator
 
-## Support
+# Install the skill into Claude Code
+mkdir -p ~/.claude/skills/google-ads-operator
+cp SKILL.md ~/.claude/skills/google-ads-operator/
 
-For tekniske spørsmål: kontakt avsender direkte. Skillen er en levende ressurs — nye praktiker-innsikter legges til underveis.
+# Launch Claude Code and test
+claude
+```
+
+Then in Claude: *"What's your framework for deciding between Smart Bidding and Manual CPC?"* — if the skill is loaded, the answer will cite the 30-conversion floor (Vallaeys/Saskin Gales) and explain the tier-dependent decision.
+
+## Who this is for
+
+- **Solo PPC operators** managing 3–15 SMB accounts who need AI leverage to stay profitable per account.
+- **Small agencies** tired of junior PPC hires making avoidable mistakes on auto-apply recommendations, Performance Max defaults, and premature Smart Bidding.
+- **Meta-strong, Google-weak marketers** who need a trusted second brain for Google Ads specifically.
+- **Norwegian / Nordic operators** who want localized guidance on kommune targeting, Finn.no dynamics, fellesferie patterns, Consent Mode v2, and NOK-budget realities.
+- **Freelancers and in-house marketers** who want to sanity-check what their Google rep is telling them before acting on it.
+
+## Who it's not for
+
+- Enterprise account managers running 8-figure USD ad spend — your problems are different.
+- Anyone hoping for magic automation that runs without human judgment. This skill makes the operator smarter; it doesn't replace them.
+- Pure e-commerce at massive scale where Performance Max + Shopping feed economics dominate — the skill covers these but isn't optimized for them.
+
+## Status and roadmap
+
+**What's in the current release:**
+- Operator skill (850+ lines, production-ready)
+- Full SETUP.md walkthrough for skill + MCP
+- MCP tool reference documentation
+
+**What's coming:**
+- The MCP server source code itself — currently documented, reference implementation ships soon
+- Meta Ads operator skill (same framework, applied to Meta's quirks)
+- Additional industry-specific playbooks (used-car dealers, home services, local restaurants)
+- Tracking-integrity audit workflows
+
+Watch the repo or follow [@casperschive](https://casperschive.no) for updates.
+
+## About the author
+
+Built by [Casper Schive](https://casperschive.no) — Norwegian AI-forward marketer and operator. Runs [AutoPromo](https://autopromo.no) (car dealer marketing) and [casperschive.no](https://casperschive.no) (AI community + custom software). Open-sources tools that he'd otherwise charge 15 000+ NOK/month to build for a single client.
+
+## License
+
+MIT. Use it. Modify it. Ship it in your own tooling. No attribution required, though a link back is appreciated if you find it useful.
+
+## Contributing
+
+Issues and pull requests welcome. The skill is a living document — if you're a PPC practitioner with a specific insight that belongs in here, open a PR with sources cited. Keep the tone practical and source-anchored; vague wisdom without attribution will be rejected politely.
+
+## Questions
+
+GitHub Issues for anything technical or content-related. For direct contact about custom implementation or agency work, see [casperschive.no](https://casperschive.no).
+
+---
+
+*Not affiliated with Google. Google Ads is a trademark of Google LLC.*
