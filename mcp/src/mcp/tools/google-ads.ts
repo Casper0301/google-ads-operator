@@ -11,7 +11,7 @@ import type { ToolDefinition } from './types.js';
 import { ok, fail } from './types.js';
 
 const NEXT_STEP = (changeId: string) =>
-  `Review the preview with Casper. When he confirms, call approve_change with change_id="${changeId}" then execute_change.`;
+  `Review the preview with the user. After confirmation, call approve_change with change_id="${changeId}" then execute_change.`;
 
 async function resolveConnection(clientSlug: string): Promise<{
   connectionId: string;
@@ -150,7 +150,6 @@ export function registerGoogleAdsTools(): ToolDefinition[] {
         try {
           const { change_id, preview } = await proposeCampaignStatus({
             clientSlug: args.client_slug as string,
-            platform: 'google_ads',
             campaignId: args.campaign_id as string,
             campaignName: args.campaign_name as string | undefined,
             action: 'pause',
@@ -181,7 +180,6 @@ export function registerGoogleAdsTools(): ToolDefinition[] {
         try {
           const { change_id, preview } = await proposeCampaignStatus({
             clientSlug: args.client_slug as string,
-            platform: 'google_ads',
             campaignId: args.campaign_id as string,
             campaignName: args.campaign_name as string | undefined,
             action: 'resume',
@@ -214,7 +212,6 @@ export function registerGoogleAdsTools(): ToolDefinition[] {
         try {
           const { change_id, preview } = await proposeCampaignBudget({
             clientSlug: args.client_slug as string,
-            platform: 'google_ads',
             campaignId: args.campaign_id as string,
             campaignName: args.campaign_name as string | undefined,
             newDailyNok: args.new_daily_nok as number,

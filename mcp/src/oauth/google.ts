@@ -123,7 +123,7 @@ export async function persistConnection(params: {
 
   await audit({
     clientId,
-    actor: 'casper',
+    actor: 'user',
     action: 'connect',
     details: { platform: 'google_ads', customer_id: customerId, mcc_id: mccId },
   });

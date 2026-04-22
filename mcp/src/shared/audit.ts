@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 
-export type Actor = 'claude' | 'casper' | 'system' | 'scheduled';
+export type Actor = 'claude' | 'user' | 'system' | 'scheduled';
 export type AuditAction =
   | 'sync'
   | 'propose'
