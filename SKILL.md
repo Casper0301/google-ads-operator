@@ -1,20 +1,29 @@
 ---
 name: google-ads-operator
-description: Deep Google Ads operator guide for Norwegian SMB context. Decision frameworks, anti-patterns, and sourced practitioner wisdom. Avoids Google-blessed recommendations that optimize for Google's revenue over client ROAS. Use when user says "Google Ads", "campaign setup", "bidding strategy", "negative keywords", "Performance Max", "conversion tracking", "quality score", "search campaign optimization", or any Google Ads campaign management question.
+description: End-to-end Google Ads skill for Claude Code. Auto-detects setup state and either walks the user through getting API access and installing the google-ads-mcp server, or operates existing Google Ads accounts with deep source-grounded practitioner wisdom. Use when user says "Google Ads", "set up Google Ads", "install google-ads-mcp", "campaign setup", "bidding strategy", "negative keywords", "Performance Max", "conversion tracking", "quality score", or any Google Ads question.
 when-to-use:
-  - Setting up new Google Ads campaigns for a client
-  - Optimizing existing campaigns
-  - Evaluating Google rep recommendations or auto-applied suggestions
+  - Setting up Google Ads management from scratch on a new machine
+  - Applying for Google Ads API developer token
+  - Installing the google-ads-mcp server locally
+  - Connecting a client's Google Ads account via OAuth
+  - Proposing or executing campaign changes (negatives, pause, budget)
+  - Running the weekly search terms / negative keyword workflow
   - Choosing a bidding strategy or deciding when to switch
   - Auditing conversion tracking setup
   - Planning campaign structure for a new account
-  - Running the weekly search terms / negative keyword workflow
   - Deciding PMax vs Search, or whether to enable Smart Bidding
+  - Evaluating Google rep recommendations or auto-applied suggestions
   - Diagnosing poor performance (low impressions, low CTR, high CPC, no conversions)
   - Any "should we do what Google suggested?" question
 trigger-keywords:
   - google ads
   - adwords
+  - google ads mcp
+  - google-ads-mcp
+  - set up google ads
+  - install google ads
+  - google ads api
+  - developer token
   - search campaign
   - shopping campaign
   - performance max
@@ -37,11 +46,366 @@ trigger-keywords:
   - exact match
 ---
 
-# Google Ads Operator — deep skill
+# Google Ads Operator
 
-A working reference for running Google Ads on small Norwegian SMB budgets (typically 2–20 000 NOK/month, some up to 50 000) where the operator is strong on Meta/Snap/TikTok and less confident on Google. Built from practitioner sources — Fred Vallaeys (Optmyzr, ex-Google 10 yrs), John Moran (Solutions 8), Brad Geddes (Adalysis, "Advanced Google AdWords"), Jyll Saskin Gales (ex-Google rep, now coach), Kirk Williams (Zato Marketing), Miles McNair (PPC Mastery), Aaron Young (Define Digital Academy), Navah Hopkins, Sarah Stemen, Andrew Hales, plus community wisdom from PPC Town Hall and r/PPC — explicitly deprioritising Google's own Skillshop material because Google's incentives and the client's incentives diverge on several recurring points.
+This skill does two things in one continuous flow:
+
+1. **Setup path** — guides the user through applying for Google Ads API access, setting up OAuth, installing the google-ads-mcp server locally, and connecting their first account. Step-by-step, with copy-paste templates and lessons learned from real applications.
+2. **Operator mode** — once the MCP is live, operates Google Ads accounts using deep source-grounded practitioner wisdom (Fred Vallaeys, John Moran, Brad Geddes, Jyll Saskin Gales, Kirk Williams, Miles McNair, Aaron Young, Navah Hopkins, Sarah Stemen, Andrew Hales, plus PPC Town Hall and r/PPC community) — explicitly deprioritising Google's own Skillshop material because Google's incentives and client ROAS diverge on recurring points.
+
+**Always begin by detecting phase.** Don't assume the user is in operator mode. A user who says "help me with Google Ads" might have nothing installed yet; start at Phase 0 to figure out where they are.
 
 Cite sources inline when a specific claim or threshold is load-bearing. If only one practitioner says X, flag it. If 3+ agree, it's a principle.
+
+---
+
+## Phase 0 — Detect current state
+
+Run these checks in order before advising or acting:
+
+### 0.1 — Is the MCP registered with Claude?
+
+```bash
+grep -l "google-ads-mcp" ~/.claude.json "$HOME/Library/Application Support/Claude/claude_desktop_config.json" 2>/dev/null
+```
+
+- No match → not installed. Go to **Phase 1**.
+- Match found → continue to 0.2.
+
+### 0.2 — Is the MCP actually responding?
+
+Try calling the `list_clients` MCP tool.
+
+- "Unknown tool" or tool not listed → registered but broken; jump to **Phase 3** step 3.3 (env / build check).
+- Returns an array (even empty) → MCP is live; continue to 0.3.
+
+### 0.3 — How many clients are connected?
+
+From `list_clients` result:
+
+- Empty array `[]` → MCP is live but no Google Ads OAuth done yet; go to **Phase 4**.
+- One or more clients → full setup complete; go to **Phase 5 (operator mode)**.
+
+Announce to the user what phase they're in and ask if they want to proceed. Example:
+
+> "Looks like you don't have the google-ads-mcp installed yet. I'll walk you through the setup in four phases — takes 1–3 days total, but most of that is waiting for Google to approve your API access. Ready to start?"
+
+---
+
+## Phase 1 — Apply for Google Ads API developer token
+
+This is a blocking step — without a developer token, nothing else works. Approval typically takes **1–3 business days**. Plan accordingly.
+
+### 1.1 — Check for an MCC (Manager Account)
+
+Google Ads API access attaches to a Manager Account (MCC), not to individual ad accounts. Ask the user:
+
+- "Do you already have a Google Ads Manager Account (MCC)?"
+- If no → direct them to create one at `https://ads.google.com/aw/signup/manager`. **The user must do this themselves** — you cannot create accounts on their behalf. Once created, they link their existing client ad accounts under the MCC.
+
+### 1.2 — Gather application inputs
+
+Before pointing them at the application form, collect and confirm these:
+
+- **Business email on own domain.** Critical. `gmail.com` / `outlook.com` get routinely rejected. Must be something like `name@theircompany.com`.
+- **Company name and org number** (organization number — e.g., Norwegian org.nr, US EIN, UK company number).
+- **Business website URL** — must match the email domain.
+- **Vertical / business description** — one sentence the user gives in their own words.
+
+If any of those is missing, help the user understand what they need before they hit the form.
+
+### 1.3 — Lessons learned (these are not in Google's docs)
+
+**DO:**
+- Use an email on the same domain as the business website.
+- Put the org number clearly in the company details.
+- Select **Basic access** (not Test). Basic = production + 15 000 ops/day.
+- Write the use case in operational English (not marketing speak).
+
+**DON'T:**
+- Submit with a gmail.com / outlook.com / yahoo.com contact email.
+- Leave the use case vague. "General marketing tool" gets rejected.
+- Mix domains (email on one domain, website on another).
+
+### 1.4 — Use case template (proven to be approved)
+
+Offer this to the user as a starting point. They should customize the bracketed parts with their own business context:
+
+> *Internal operator tool for managing Google Ads accounts for [type of businesses, e.g. small and medium-sized Norwegian businesses]. Primary use cases: automated search terms reporting, negative keyword management, campaign status and budget changes with human approval gate, conversion tracking audits. The tool implements a plan → preview → confirm → execute pattern for all write operations — nothing writes to an account without explicit user approval. Full audit log and rollback on every change. No resale of access; single-operator [agency / in-house] use.*
+
+### 1.5 — Walk through the submission
+
+1. User logs into their MCC.
+2. **Admin → API Center → Apply for Basic access**.
+3. Fills in all fields using the inputs from 1.2.
+4. Pastes the use case from 1.4.
+5. API call volume estimate: `100–1 000 operations/day` is realistic for a typical SMB agency. If they manage 10+ clients, increase to `1 000–5 000/day`.
+6. Submits.
+
+### 1.6 — After submission
+
+Tell the user:
+- Expect email from Google within 1–3 business days.
+- Approved → proceed to Phase 2.
+- Rejected → common reasons are gmail.com email, vague use case, or domain mismatch. Help the user fix the specific feedback and resubmit. Round-2 approvals after addressing feedback are very common.
+
+If rejected multiple times with unclear feedback, suggest the user writes a longer, more detailed use case describing *each* operation the tool will perform, with specific client examples.
+
+---
+
+## Phase 2 — Google Cloud OAuth setup
+
+Once the developer token is approved, set up OAuth so the MCP can authenticate per-account with Google.
+
+### 2.1 — Create or select a Google Cloud project
+
+1. Open `https://console.cloud.google.com`.
+2. Top bar → project picker → **New Project**.
+3. Name: `google-ads-mcp` (or reuse an existing one).
+4. **APIs & Services → Library** → search "Google Ads API" → **Enable**.
+
+### 2.2 — Configure OAuth consent screen
+
+1. **APIs & Services → OAuth consent screen**.
+2. User Type: **External** (required for any Gmail account that isn't part of a Google Workspace org).
+3. App information:
+   - App name: `Google Ads MCP` (or similar)
+   - User support email: user's business email
+   - App logo: optional
+   - Authorized domains: the business domain
+   - Developer contact: user's business email
+4. **Scopes** → add `https://www.googleapis.com/auth/adwords`.
+5. **Test users** → add the user's own Google account email. Add any other emails that will log in to connect accounts (e.g., if a teammate will onboard a client).
+
+**CRITICAL:** Do NOT click "Publish app". The `adwords` scope is sensitive and publishing triggers a Google verification process that takes weeks. Keep the app in **Testing** mode. Testing mode works fine for internal / agency use — the only restriction is that the authenticating user must be in the test users list.
+
+### 2.3 — Create OAuth client credentials
+
+1. **APIs & Services → Credentials → Create Credentials → OAuth client ID**.
+2. Application type: **Web application**.
+3. Name: `google-ads-mcp-oauth`.
+4. **Authorized redirect URIs**: add `http://localhost:5432/oauth/google/callback`.
+5. Click Create.
+6. Download or copy **Client ID** and **Client secret** — save these; they go in the MCP's `.env.local`.
+
+### 2.4 — Save what was captured
+
+At this point the user should have:
+- Developer token (from Phase 1)
+- OAuth Client ID
+- OAuth Client secret
+- MCC ID (digits only, no dashes, e.g. `1234567890` for MCC `123-456-7890`)
+
+If they're fuzzy on the MCC ID, have them go back to MCC → Admin → Account settings → Manager account ID.
+
+---
+
+## Phase 3 — Install the google-ads-mcp server locally
+
+### 3.1 — Prerequisites check
+
+```bash
+node --version    # must be 20+
+git --version
+```
+
+If Node < 20: install Node 20+ via `nvm`, Homebrew, or the official installer before continuing.
+
+### 3.2 — Clone the repo
+
+Ask the user where they want to put projects. A common default is `~/Projects`. Then:
+
+```bash
+cd ~/Projects  # or wherever
+git clone https://github.com/Casper0301/google-ads-operator.git
+cd google-ads-operator/mcp
+npm install
+```
+
+### 3.3 — Set up Supabase (free tier is plenty)
+
+The MCP uses Supabase as its persistence layer for OAuth tokens (encrypted), clients, changes pipeline, and audit log.
+
+1. User creates a project at `https://supabase.com`. Suggest Stockholm (`eu-north-1`) region for Norwegian users, Frankfurt (`eu-central-1`) for EU generally.
+2. Project Settings → API → copy:
+   - **Project URL** → becomes `SUPABASE_URL`
+   - **service_role** secret → becomes `SUPABASE_SERVICE_ROLE_KEY` (NEVER commit this)
+3. Settings → Access Tokens → **Generate new token** → saves as `SUPABASE_ACCESS_TOKEN` (used by the Supabase CLI for migrations).
+4. Install the Supabase CLI locally if not present: `npm install -g supabase` (or `brew install supabase/tap/supabase`).
+
+### 3.4 — Generate encryption key
+
+The MCP encrypts OAuth refresh tokens at-rest using AES-256-GCM. Generate a 32-byte hex key:
+
+```bash
+openssl rand -hex 32
+```
+
+Save the output — it goes in `.env.local` as `GOOGLE_ADS_MCP_ENCRYPTION_KEY`. If lost, previously-stored tokens become unrecoverable. Treat it as a master key.
+
+### 3.5 — Configure environment
+
+```bash
+cp .env.example .env.local
+```
+
+Walk the user through editing `.env.local` with the values collected in Phases 1–2 and the Supabase/encryption values from 3.3–3.4:
+
+```
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SCHEMA=public
+GOOGLE_ADS_MCP_ENCRYPTION_KEY=<hex from step 3.4>
+GOOGLE_ADS_DEVELOPER_TOKEN=<from Phase 1>
+GOOGLE_ADS_CLIENT_ID=<from Phase 2>
+GOOGLE_ADS_CLIENT_SECRET=<from Phase 2>
+GOOGLE_ADS_MCC_ID=<digits only>
+GOOGLE_ADS_REDIRECT_URI=http://localhost:5432/oauth/google/callback
+```
+
+Never commit `.env.local`.
+
+### 3.6 — Run database migrations
+
+Link the local project to the Supabase project:
+
+```bash
+supabase link --project-ref <project-ref>   # project-ref is the xxx in xxx.supabase.co
+```
+
+Then push the schema:
+
+```bash
+SUPABASE_ACCESS_TOKEN=<token> npm run db:migrate
+```
+
+Verify in the Supabase dashboard → Table Editor that tables `clients`, `platform_connections`, `campaigns`, `changes`, `playbooks`, `audit_log` all exist.
+
+### 3.7 — Build the MCP server
+
+```bash
+npm run build
+```
+
+This compiles TypeScript to `dist/`. Any errors here are typically missing env vars — re-check `.env.local` against the error message.
+
+### 3.8 — Register the MCP with Claude Code
+
+Add an entry to `~/.claude.json` under `mcpServers`. If the file doesn't exist or doesn't have that section, create/add:
+
+```json
+{
+  "mcpServers": {
+    "google-ads-mcp": {
+      "command": "node",
+      "args": ["/absolute/path/to/google-ads-operator/mcp/dist/mcp/server.js"],
+      "env": {
+        "SUPABASE_URL": "https://xxx.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJ...",
+        "SUPABASE_SCHEMA": "public",
+        "GOOGLE_ADS_MCP_ENCRYPTION_KEY": "...",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "...",
+        "GOOGLE_ADS_CLIENT_ID": "...",
+        "GOOGLE_ADS_CLIENT_SECRET": "...",
+        "GOOGLE_ADS_MCC_ID": "...",
+        "GOOGLE_ADS_REDIRECT_URI": "http://localhost:5432/oauth/google/callback"
+      }
+    }
+  }
+}
+```
+
+Use the same env values as `.env.local`. Absolute path is required in `args`.
+
+For **Claude Desktop**, same JSON structure but in:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### 3.9 — Restart Claude
+
+Exit the current Claude Code session (or restart Claude Desktop). Launch again. The MCP should now be picked up.
+
+### 3.10 — Smoke test
+
+In a new Claude session:
+
+> "What google-ads-mcp tools do you have?"
+
+Expected response lists: `list_clients`, `get_client`, `list_pending_changes`, `get_change`, `approve_change`, `reject_change`, `execute_change`, `propose_rollback`, `google_ads_search_terms_report`, `google_ads_propose_negative_keywords`, `google_ads_propose_pause_campaign`, `google_ads_propose_resume_campaign`, `google_ads_propose_campaign_budget`.
+
+If the list appears → Phase 3 complete; proceed to Phase 4.
+
+If errors:
+- "Unknown tool" → MCP didn't register. Re-check the JSON config path is absolute and the `dist/mcp/server.js` file exists.
+- Connection errors → check env vars in the MCP config match `.env.local` exactly.
+- Schema / RLS errors → confirm the migration ran (3.6).
+
+---
+
+## Phase 4 — Connect the first client
+
+Now that the MCP is alive, do the OAuth dance for a real Google Ads account.
+
+### 4.1 — Create the client record
+
+From inside the MCP directory, run a simple insert via the Supabase SQL editor, or via psql:
+
+```sql
+insert into clients (slug, name, industry, tier, monthly_retainer_nok)
+values ('client-slug', 'Client Name AS', 'car_dealer', 1, 6000);
+```
+
+Alternatively, have the user go to Supabase Table Editor → `clients` → Insert row.
+
+### 4.2 — Run OAuth script
+
+```bash
+cd ~/Projects/google-ads-operator/mcp
+npm run oauth:google -- client-slug 1234567890 "Client Name AS" <MCC-ID>
+```
+
+Arguments:
+1. `client-slug` — the slug you just inserted
+2. `1234567890` — the Google Ads customer ID (digits only, no dashes) for the client's ad account
+3. `"Client Name AS"` — display name
+4. `<MCC-ID>` — optional; include if the account is managed under an MCC (which it usually is)
+
+### 4.3 — Complete OAuth in browser
+
+The script prints a Google authorization URL. User:
+
+1. Opens the URL in the same browser where they're logged into the test-user Google account (from Phase 2.2).
+2. Grants access.
+3. Gets redirected to `http://localhost:5432/oauth/google/callback?state=...&code=...`.
+4. The page may show "connection refused" or similar — that's fine, the MCP isn't running a local server on that port by default. They just need the URL.
+5. Copies the `code` parameter value from the redirect URL.
+6. Pastes it at the script's prompt.
+
+**If "Access blocked: App has not completed Google verification"**: the user isn't in the test users list (Phase 2.2). Have them log in as one of the test users, or add their current email as a test user and retry.
+
+### 4.4 — Verify
+
+Back in Claude:
+
+> "List clients"
+
+Should return the client you just created.
+
+> "Pull search terms report for client-slug last 7 days"
+
+If the campaign is live and has data, you get results. Victory.
+
+### 4.5 — Save state
+
+Suggest the user add `.env.local`, OAuth credentials backup, and encryption key backup to their password manager (1Password, Bitwarden, etc.). If they lose `GOOGLE_ADS_MCP_ENCRYPTION_KEY`, stored refresh tokens become garbage.
+
+---
+
+## Phase 5 — Operator mode (deep skill)
+
+Below is the full operator knowledge base. Everything from here onward is the practitioner-sourced deep skill. When the user is in Phase 5, draw on this as the decision framework. Cite sources inline when a claim is load-bearing.
+
+Scope: running Google Ads on small Norwegian SMB budgets (typically 2–20 000 NOK/month, some up to 50 000) where the operator is strong on Meta/Snap/TikTok and less confident on Google. Built from practitioner sources — Fred Vallaeys (Optmyzr, ex-Google 10 yrs), John Moran (Solutions 8), Brad Geddes (Adalysis, "Advanced Google AdWords"), Jyll Saskin Gales (ex-Google rep, now coach), Kirk Williams (Zato Marketing), Miles McNair (PPC Mastery), Aaron Young (Define Digital Academy), Navah Hopkins, Sarah Stemen, Andrew Hales, plus community wisdom from PPC Town Hall and r/PPC — explicitly deprioritising Google's own Skillshop material because Google's incentives and the client's incentives diverge on several recurring points.
 
 ## Operating principles
 

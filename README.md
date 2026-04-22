@@ -1,62 +1,43 @@
 # Google Ads Operator
 
-**Open-source operator skill + MCP setup for Claude Code.** Turn Claude into a deep Google Ads operator that thinks like a senior PPC consultant, not like a Google rep. Built for small-to-mid-budget accounts where getting the fundamentals right matters more than chasing every shiny Google feature.
+**One skill for Claude Code that sets itself up and then runs your Google Ads.**
 
-Free. MIT licensed. No strings attached.
+Drop the skill folder into `~/.claude/skills/`, tell Claude you want Google Ads management, and it walks you through the whole thing:
 
-![Status](https://img.shields.io/badge/status-production-green) ![License](https://img.shields.io/badge/license-MIT-blue) ![Language](https://img.shields.io/badge/language-English%20%7C%20Norsk-lightgrey)
+1. Applying for a Google Ads API developer token (with lessons learned from real applications — business-email requirement, use-case template that gets approved, common rejection reasons)
+2. Setting up Google Cloud OAuth credentials
+3. Installing the bundled `google-ads-mcp` server locally (clone → npm install → Supabase → env → register with Claude)
+4. Connecting your first client via OAuth
+5. Operating accounts with deep source-grounded practitioner knowledge — match types, bidding strategies, negatives, Performance Max traps, Consent Mode v2, Norwegian market specifics, and more
 
-## What it is
+The skill auto-detects where you are and picks up from the right phase. First-time users get the full onboarding. Returning users go straight to operator mode.
 
-A deep, source-grounded skill for Claude Code that covers the full Google Ads operator's job — account structure, match types, negative keywords, bidding strategy, Smart Bidding readiness thresholds, Performance Max traps, Quality Score mechanics, conversion tracking, Consent Mode v2, landing-page alignment, and more. Sourced from 15+ practitioners who have actually run accounts at scale: Fred Vallaeys, John Moran, Brad Geddes, Jyll Saskin Gales, Kirk Williams, Miles McNair, Aaron Young, Navah Hopkins, Sarah Stemen, and others — **explicitly deprioritizing Google's own Skillshop material** because Google's incentives and your client's ROAS don't always align.
+Free. MIT licensed. No strings.
 
-Paired with optional MCP setup so Claude can read from and propose changes to your actual Google Ads accounts through a plan → preview → confirm → execute pipeline. Every write operation requires your approval. Full audit log. Rollback on any change.
+![Status](https://img.shields.io/badge/status-production-green) ![License](https://img.shields.io/badge/license-MIT-blue) ![Language](https://img.shields.io/badge/language-TypeScript-blue)
+
+## What's in this repo
+
+```
+google-ads-operator/
+├── SKILL.md          # The unified skill — setup flow + operator knowledge
+├── mcp/              # The google-ads-mcp server (TypeScript)
+│   ├── src/          # MCP tools, Google Ads platform wrapper, operations
+│   ├── supabase/     # Database schema migration
+│   ├── scripts/      # OAuth helper script
+│   ├── package.json
+│   └── .env.example
+├── LICENSE           # MIT
+└── README.md         # This file
+```
 
 ## Why it exists
 
-Most Google Ads agencies charge 6 000–15 000 NOK/month to manage a single SMB account with a 5 000 NOK/month ad budget. Half the work is routine (search terms review, negative keywords, budget pacing) and the other half is judgment calls that require real expertise. AI leverage collapses the routine half while preserving — and sharpening — the judgment half. This bundle gives you both.
+Small-budget Google Ads accounts (5 000–20 000 NOK/month) live in an awkward gap. Big agencies won't touch them. Freelancers charge 6 000+ NOK/month to manage them and half the work is routine that doesn't need a human. AI leverage collapses the routine half — search terms review, negative keyword sweeps, budget pacing, report generation — while sharpening the judgment half, where practitioner-sourced decision frameworks matter more than Google's own Skillshop material.
 
-If you're a solo PPC operator, a small agency trying to scale without hiring, or a marketing generalist who's strong on Meta but weak on Google, this closes that gap.
+This skill gives you both: a local MCP server that talks to Google Ads API through a safe plan → preview → confirm → execute pipeline, plus deep operator knowledge so Claude reasons like a senior PPC consultant, not like a Google rep.
 
-## What's inside
-
-| File | Purpose |
-|------|---------|
-| [`SKILL.md`](./SKILL.md) | Deep operator skill, 850+ lines, sourced inline. This is the brain. |
-| [`README.md`](./README.md) | This file. |
-| [`SETUP.md`](./SETUP.md) | Step-by-step install. Claude Code → developer token → OAuth → Supabase → MCP connection. Norwegian — translate if needed. |
-| [`MCP_TOOLS.md`](./MCP_TOOLS.md) | Reference for all MCP tools with example prompts. Norwegian. |
-| [`LICENSE`](./LICENSE) | MIT. |
-
-## Two ways to use it
-
-### Level 1 — skill only (15-minute install)
-
-Drop `SKILL.md` into `~/.claude/skills/google-ads-operator/` and you're done. Claude now reasons about Google Ads decisions using the operator skill — bidding-strategy selection, Smart Bidding readiness, match-type framework, negative keyword discipline, Performance Max fit assessment, Norwegian market specifics (Finn.no dynamics, kommune-level targeting, fellesferie, Consent Mode v2 compliance).
-
-Ask Claude questions like:
-- *"Should we switch this campaign from Max Conversions to tCPA? 30-day stats: 42 conversions, 340 kr CPA, stable."*
-- *"My Google rep is pushing Performance Max. Should I do it?"*
-- *"Give me a negative keyword seed list for a Norwegian used-car dealer on Tier 1 budget."*
-- *"My Ad Strength is 'Poor' — what's actually worth fixing?"*
-
-Answers are grounded in sourced practitioner wisdom, not Google's default advice.
-
-### Level 2 — skill + MCP (2–4 hours install)
-
-Claude gets direct Google Ads API access through a local MCP server. Now he can:
-
-- Pull search terms reports for any client on demand
-- Propose negative keywords with reasoning — you confirm, then execute
-- Propose campaign pauses and budget changes with preview + undo data
-- Roll back any prior change in one command
-- Audit-log everything in your own Supabase
-
-All write operations go through **plan → preview → confirm → execute**. Claude never writes to an ad account without showing you exactly what's going to happen.
-
-*Note: Level 2 requires a Google Ads Developer Token (free, 1–3 day approval), a Google Cloud project for OAuth, and optionally a Supabase project for persistence. Full walkthrough in `SETUP.md`.*
-
-## Quickstart (Level 1)
+## Quickstart
 
 ```bash
 # Clone the repo
@@ -67,56 +48,83 @@ cd google-ads-operator
 mkdir -p ~/.claude/skills/google-ads-operator
 cp SKILL.md ~/.claude/skills/google-ads-operator/
 
-# Launch Claude Code and test
+# Launch Claude Code
 claude
 ```
 
-Then in Claude: *"What's your framework for deciding between Smart Bidding and Manual CPC?"* — if the skill is loaded, the answer will cite the 30-conversion floor (Vallaeys/Saskin Gales) and explain the tier-dependent decision.
+In Claude, tell it:
+
+> "I want to set up Google Ads management for my business."
+
+The skill activates, detects you have nothing installed, and walks you through Phase 1 (developer token application). From there, follow its lead.
+
+Already have a developer token and Google Cloud OAuth? The skill skips ahead to the install phase automatically.
+
+## Requirements
+
+- **Claude Code** (CLI or Desktop) — Pro/Max subscription or API key. Free from claude.com.
+- **Google Ads Manager Account (MCC)** — free; create at `ads.google.com/aw/signup/manager` if you don't have one.
+- **Google Ads API Basic access** — free, 1–3 day approval. The skill walks you through it.
+- **Google Cloud account** — free tier is enough.
+- **Supabase account** — free tier is plenty (stores encrypted OAuth tokens, changes pipeline, audit log).
+- **Node 20+** — for running the MCP server.
+- A domain and business email on that domain — needed for Google Ads API approval.
+
+## What the MCP can do
+
+**Read operations (autonomous, no approval needed):**
+- Pull search terms reports for any connected client
+- List clients, pending changes, audit log
+
+**Write operations (always go through plan → preview → confirm → execute):**
+- Propose negative keywords to campaigns or shared sets
+- Propose campaign pause / resume
+- Propose daily budget changes
+- Rollback any previously-executed change
+
+Every write has undo data stored before execution. Nothing happens in your Google Ads account without your explicit approval.
 
 ## Who this is for
 
-- **Solo PPC operators** managing 3–15 SMB accounts who need AI leverage to stay profitable per account.
-- **Small agencies** tired of junior PPC hires making avoidable mistakes on auto-apply recommendations, Performance Max defaults, and premature Smart Bidding.
-- **Meta-strong, Google-weak marketers** who need a trusted second brain for Google Ads specifically.
-- **Norwegian / Nordic operators** who want localized guidance on kommune targeting, Finn.no dynamics, fellesferie patterns, Consent Mode v2, and NOK-budget realities.
-- **Freelancers and in-house marketers** who want to sanity-check what their Google rep is telling them before acting on it.
+- **Solo PPC operators** managing 3–15 SMB accounts who want AI leverage per client without losing operator-level control.
+- **Small agencies** tired of junior hires tripping on auto-apply recommendations, Performance Max defaults, and premature Smart Bidding.
+- **Meta-strong, Google-weak marketers** who want a trusted second brain for the Google side specifically.
+- **Norwegian / Nordic operators** — the skill is tuned for NOK budgets, kommune-level targeting, Finn.no dynamics, fellesferie seasonality, Consent Mode v2 compliance. Works globally too.
+- **Anyone** who wants to sanity-check what their Google rep is suggesting before acting on it.
 
-## Who it's not for
+## What makes the operator knowledge different
 
-- Enterprise account managers running 8-figure USD ad spend — your problems are different.
-- Anyone hoping for magic automation that runs without human judgment. This skill makes the operator smarter; it doesn't replace them.
-- Pure e-commerce at massive scale where Performance Max + Shopping feed economics dominate — the skill covers these but isn't optimized for them.
+Sourced inline from real practitioners, not Google's marketing material:
 
-## Status and roadmap
+- Fred Vallaeys (Optmyzr, ex-Google 10 years)
+- John Moran (Solutions 8)
+- Brad Geddes (Adalysis, author of *Advanced Google AdWords*)
+- Jyll Saskin Gales (ex-Google rep, now coach)
+- Kirk Williams (Zato Marketing)
+- Miles McNair (PPC Mastery)
+- Aaron Young (Define Digital Academy)
+- Navah Hopkins, Sarah Stemen, Andrew Hales
+- PPC Town Hall and r/PPC community wisdom
 
-**What's in the current release:**
-- Operator skill (850+ lines, production-ready)
-- Full SETUP.md walkthrough for skill + MCP
-- MCP tool reference documentation
-
-**What's coming:**
-- The MCP server source code itself — currently documented, reference implementation ships soon
-- Meta Ads operator skill (same framework, applied to Meta's quirks)
-- Additional industry-specific playbooks (used-car dealers, home services, local restaurants)
-- Tracking-integrity audit workflows
-
-Watch the repo or follow [@casperschive](https://casperschive.no) for updates.
-
-## About the author
-
-Built by [Casper Schive](https://casperschive.no) — Norwegian AI-forward marketer and operator. Runs [AutoPromo](https://autopromo.no) (car dealer marketing) and [casperschive.no](https://casperschive.no) (AI community + custom software). Open-sources tools that he'd otherwise charge 15 000+ NOK/month to build for a single client.
+Google's own Skillshop material is explicitly deprioritized. Google's incentives (more spend, broader match, Performance Max adoption, auto-applied recommendations) diverge from client ROAS on multiple recurring points. The skill flags those divergences and cites which practitioner underwrites each counter-recommendation.
 
 ## License
 
-MIT. Use it. Modify it. Ship it in your own tooling. No attribution required, though a link back is appreciated if you find it useful.
+MIT. Use it. Modify it. Ship it in your own tooling. No attribution required, though a link back is appreciated.
+
+## About the author
+
+Built by [Casper Schive](https://casperschive.no) — Norwegian AI-forward marketer and operator. Runs [AutoPromo](https://autopromo.no) (car dealer marketing) and [casperschive.no](https://casperschive.no) (custom software + AI community). Open-sources tools that would otherwise cost clients 15 000+ NOK/month to build.
 
 ## Contributing
 
-Issues and pull requests welcome. The skill is a living document — if you're a PPC practitioner with a specific insight that belongs in here, open a PR with sources cited. Keep the tone practical and source-anchored; vague wisdom without attribution will be rejected politely.
+Issues and pull requests welcome. The skill is a living document — if you're a PPC practitioner with a specific insight that belongs in the operator section, open a PR with sources cited. Keep the tone practical and source-anchored; vague wisdom without attribution will be rejected politely.
+
+For MCP code contributions, keep the plan → preview → confirm → execute pattern intact for any new write operation. No direct API writes.
 
 ## Questions
 
-GitHub Issues for anything technical or content-related. For direct contact about custom implementation or agency work, see [casperschive.no](https://casperschive.no).
+GitHub Issues for anything technical. For direct contact about custom implementation work, see [casperschive.no](https://casperschive.no).
 
 ---
 
